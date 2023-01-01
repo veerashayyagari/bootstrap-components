@@ -1,0 +1,27 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  serviceSubnet: '10.96.0.0/16' # subnet for service ip addresses
+  podSubnet: '10.244.0.0/16' # subnet for pod ip addresses
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:            
+            node-labels: "ingress-ready=true" # configures cluster to accept ingress controller
+    # Port forward to Kind cluster, must have if you have docker-desktop installed
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+      # Allows for testing using NodePort on 30010
+      - containerPort: 30010
+        hostPort: 80
+        protocol: TCP
+  - role: worker
+  - role: worker

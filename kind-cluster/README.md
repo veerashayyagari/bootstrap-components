@@ -34,16 +34,20 @@
 
 ![Validation](./images/cluster-setup-validation.png)
 
-### Registry Validation
+### Ingress Validation
 
-- Currently (as of Jan 1st 2023), kind cluster doesn't automatically load images from docker registry.
+- Let's validate ingress my deploying ingress-test.yaml with a local docker image
+  ![Error on Image Pull](./images/ErrImagePull.png)
 
-- Option 1 : using `kind load docker-image` and push the image to the corresponding node(s)
+- If you see an 'ErrImagePull' error, it is due to the fact that the local images in your docker registry are not accessible to the kind cluster.
 
-- Option 2 : Push the image to the local registry and use the image with the registry tag to load images into the cluster
-  - Let's tag a local image 'na:local' against the registry we just setup
-    ```
-    docker tag na:local localhost:5001/na:local
+- You will need to tag the image and push it to the kind cluster's own registry that we have setup on 'localhost:5001'
+  ![Tag and Push to Local Registry](./images/Push2LocalRegistry.png)
 
-    docker push localhost:5001/na:local
-    ```
+  NOTE: You will not have this error if you are not using locally built image in the ingress-test.yaml. Kind will be able to pull the image from internet and run it.
+
+- Now let's deploy ingress-test.yaml again
+  ![Image Pull Success and Ingress Running](./images/ImagePullSuccess.png)
+
+- You should see that requests going to different containers based on the url
+  ![Ingress Request Validation](./images/IngressValidation.png)

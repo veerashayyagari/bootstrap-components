@@ -36,7 +36,7 @@
 
 ### Ingress Validation
 
-- Let's validate ingress my deploying ingress-test.yaml with a local docker image
+- Let's validate ingress by deploying ingress-test.yaml with a local docker image
   ![Error on Image Pull](./images/ErrImagePull.png)
 
 - If you see an 'ErrImagePull' error, it is due to the fact that the local images in your docker registry are not accessible to the kind cluster.
@@ -44,7 +44,7 @@
 - You will need to tag the image and push it to the kind cluster's own registry that we have setup on 'localhost:5001'
   ![Tag and Push to Local Registry](./images/Push2LocalRegistry.png)
 
-  NOTE: You will not have this error if you are not using locally built image in the ingress-test.yaml. Kind will be able to pull the image from internet and run it.
+  NOTE: You will have this error only if you are using locally built image in the ingress-test.yaml.
 
 - Now let's deploy ingress-test.yaml again
   ![Image Pull Success and Ingress Running](./images/ImagePullSuccess.png)

@@ -1,6 +1,6 @@
 # Kind : Local k8s cluster with Ingress and Registry support
 
-*Instructions are specific to MacOS Apple Silicon, should work on other OS once the appropriate pre-requisites are installed*
+*Instructions are specific to MacOS Apple Silicon, should work for other OS (use OS specific way to install pre-requisites)*
 
 ## Prerequisites
 

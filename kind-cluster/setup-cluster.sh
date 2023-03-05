@@ -2,18 +2,19 @@
 set -o errexit
 
 # create registry container unless it already exists
-cluster_name='k8s-cluster'
+cluster_name="$1"
 reg_name='kind-registry'
 reg_port='5001'
 cluster_list=$(kind get clusters -q)
 if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)" != 'true' ]; then
+  echo "configuring local kind registry"
   docker run \
     -d --restart=always -p "127.0.0.1:${reg_port}:5000" --name "${reg_name}" \
     registry:2
 fi
 
 if [[ $cluster_list != *"${cluster_name}"* ]]; then
-    echo "create a cluster with the local registry enabled in containerd"
+    echo "create a cluster ( ${cluster_name} ) with local kind registry enabled"
     cat <<EOF | kind create cluster --name ${cluster_name} --config=-
     kind: Cluster
     apiVersion: kind.x-k8s.io/v1alpha4
@@ -35,9 +36,6 @@ if [[ $cluster_list != *"${cluster_name}"* ]]; then
           - containerPort: 443
             hostPort: 443
             protocol: TCP
-          - containerPort: 30010
-            hostPort: 8090
-            protocol: TCP
       - role: worker
       - role: worker
     containerdConfigPatches:
@@ -53,7 +51,7 @@ if [ "$(docker inspect -f='{{json .NetworkSettings.Networks.kind}}' "${reg_name}
   docker network connect "kind" "${reg_name}"
 fi
 
-# Document the local registry
+echo "Document the local registry"
 # https://github.com/kubernetes/enhancements/tree/master/keps/sig-cluster-lifecycle/generic/1755-communicating-a-local-registry
 cat <<EOF | kubectl apply -f -
 apiVersion: v1

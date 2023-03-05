@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-app-deployment
+  labels:
+    app: react-app
+spec:
+  selector:
+    matchLabels:
+      app: react
+  template:
+    metadata:
+      labels:
+        app: react
+    spec:
+      containers:
+        - name: react-app
+          image: localhost:5001/nodeweb:v1.0
+          ports:
+            - containerPort: 3000
+          resources: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: react-app-service
+spec:
+  selector:
+    app: react
+  ports:
+    # Default port used by the image
+    - port: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-deployment
+  labels:
+    app: httpbin-app
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  template:
+    metadata:
+      labels:
+        app: httpbin
+    spec:
+      containers:
+        - name: httpbin-app
+          image: mshanley80/httpbin2022:latest
+          ports:
+            - containerPort: 80
+          resources: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: httpbin-app-service
+spec:
+  selector:
+    app: httpbin
+  ports:
+    # Default port used by the image
+    - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress  
+spec:
+  rules:
+  - host: "httpbin.localtest.me"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: httpbin-app-service
+            port:
+              number: 80
+  - host: "nodeweb-app.localtest.me"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: react-app-service
+            port:
+              number: 3000
+---
+

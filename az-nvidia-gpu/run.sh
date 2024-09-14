@@ -69,26 +69,26 @@ if [ "$gpuType" == "a100" ]; then
     esac
 fi
 
-# if gpuType is h100, then the sku is Standard_NCv40ads_H100_v5 or Standard_NC80adis_H100_v5, give the options and ask user to select one
+# if gpuType is h100, then the sku is Standard_NC40ads_H100_v5 or Standard_NC80adis_H100_v5, give the options and ask user to select one
 if [ "$gpuType" == "h100" ]; then
     echo "Select the SKU for the VM:"
-    echo "1. Standard_NCv40ads_H100_v5"
+    echo "1. Standard_NC40ads_H100_v5"
     echo "2. Standard_NC80adis_H100_v5"
     read -p "Enter the number corresponding to the SKU (default is 1): " skuOption
     case $skuOption in
         1)
-            sku="Standard_NCv40ads_H100_v5"
+            sku="Standard_NC40ads_H100_v5"
             requestedQuota=40
             family="Standard NCadsH100v5 Family vCPUs"
             ;;
         2)
-            sku="Standard_NC80ads_H100_v5"
+            sku="Standard_NC80adis_H100_v5"
             requestedQuota=80
             family="Standard NCadsH100v5 Family vCPUs"
             ;;
         *)
-            echo "Invalid option. Using default SKU: Standard_NCv40ads_H100_v5"
-            sku="Standard_NCv40ads_H100_v5"
+            echo "Invalid option. Using default SKU: Standard_NC40ads_H100_v5"
+            sku="Standard_NC40ads_H100_v5"
             requestedQuota=40
             family="Standard NCadsH100v5 Family vCPUs"
             ;;
@@ -97,11 +97,11 @@ fi
 
 
 
-read -p "Enter the name of the resource group (default: az-$deploymentregion-$gpuType-gpu-vm-rg): " resourceGroupName
-resourceGroupName=${resourceGroupName:-az-$deploymentregion-$gpuType-gpu-vm-rg}
+read -p "Enter the name of the resource group (default: az-$deploymentRegion-$gpuType-gpu-vm-rg): " resourceGroupName
+resourceGroupName=${resourceGroupName:-az-$deploymentRegion-$gpuType-gpu-vm-rg}
 
-read -p "Enter the name of the virtual machine (default: az-$deploymentregion-$gpuType-gpu-vm): " vmName
-vmName=${vmName:-az-$deploymentregion-$gpuType-gpu-vm}
+read -p "Enter the name of the virtual machine (default: az-$deploymentRegion-$gpuType-gpu-vm): " vmName
+vmName=${vmName:-az-$deploymentRegion-$gpuType-gpu-vm}
 
 # ask for vm username
 read -p "Enter the username for the VM (default: azureuser): " vmUsername
@@ -109,7 +109,9 @@ vmUsername=${vmUsername:-azureuser}
 
 # ask for vm ssh public key location
 read -p "Enter the path to the SSH public key file (default: ~/.ssh/id_rsa.pub): " sshPublicKeyPath
-sshPublicKey=$(cat ${sshPublicKeyPath:-~/.ssh/id_rsa.pub})
+sshPublicKey=${sshPublicKeyPath:-~/.ssh/id_rsa.pub}
+sshPublicKeyPath=$(eval echo $sshPublicKeyPath)
+sshPublicKey=$(cat "$sshPublicKeyPath")
 
 # ask if the user wants to use spot discount
 read -p "Do you want to use spot discount. Y or yes and N for no (default: Y): " useSpotDiscount
@@ -211,17 +213,16 @@ az vm create \
 --resource-group $resourceGroupName \
 --location $deploymentRegion \
 --name $vmName \
---image Canonical:ubuntu-24_04-lts:server:latest \
+--image Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:latest \
 --size $sku \
 --nics ${vmName}-nic \
---admin-username $vmUserName \
+--admin-username $vmUsername \
 --ssh-key-value $sshPublicKeyPath \
 --nic-delete-option Delete \
 --os-disk-size-gb 128 \
 --os-disk-delete-option Delete \
 --priority $priority \
---security-type Standard \
---no-wait
+--security-type Standard
 
 # enable auto-shutdown at 8 PM PST
 az vm auto-shutdown \
@@ -260,7 +261,12 @@ az vm restart --resource-group $resourceGroupName --name $vmName
 
 # print ssh command using dns name, username and sshkey
 echo "SSH into the VM using the following command:"
-echo "ssh $vmUsername@${vmName}.${deploymentRegion}.cloudapp.azure.com -i $sshPublicKeyPath"
+sshCommand="ssh $vmUsername@${vmName}.${deploymentRegion}.cloudapp.azure.com -i ${sshPublicKeyPath%.pub}"
+echo $sshCommand
+
+# execute any custom script inside the vm
+# remoteScriptPath="/path/to/remote/script.sh"
+# $sshCommand "bash -s" < $remoteScriptPath
 
 # clean up once the work is done
 # az group delete --name $resourceGroupName --yes
